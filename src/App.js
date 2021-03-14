@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useReducer, useState } from "react";
 import "./App.css";
 import firebase from "firebase/app";
 import "firebase/auth";
@@ -7,6 +7,7 @@ import firebaseConfig from "./firebase.config";
 firebase.initializeApp(firebaseConfig);
 
 function App() {
+  const [newUser, setNewUser] = useState(false);
   const [user, setUser] = useState({
     isSigned: false,
     name: "",
@@ -88,8 +89,23 @@ function App() {
           const newUserInfo = { ...user };
           newUserInfo.error = error.message;
           setUser(newUserInfo);
+        });
+    }
 
-          // ..
+    if (!newUser && user.email && user.password) {
+      firebase
+        .auth()
+        .signInWithEmailAndPassword(user.email, user.password)
+        .then((res) => {
+          const newUserInfo = { ...user };
+          newUserInfo.error = "";
+          newUserInfo.success = true;
+          setUser(newUserInfo);
+        })
+        .catch((error) => {
+          const newUserInfo = { ...user };
+          newUserInfo.error = error.message;
+          setUser(newUserInfo);
         });
     }
     e.preventDefault();
@@ -109,12 +125,22 @@ function App() {
       <p>Password: {user.password}</p> */}
       <form onSubmit={handleSubmit}>
         <input
-          type="text"
-          name="name"
-          onBlur={handleBlur}
-          placeholder="Enter Your name"
-          required
+          type="checkbox"
+          onChange={() => setNewUser(!newUser)}
+          name="newUser"
+          id=""
         />
+        <label htmlFor="newUser">New User Sign Up</label>
+        <br />
+        {newUser && (
+          <input
+            type="text"
+            name="name"
+            onBlur={handleBlur}
+            placeholder="Enter Your name"
+            required
+          />
+        )}
         <br />
         <input
           type="email"
@@ -134,10 +160,12 @@ function App() {
         <br />
         <input type="submit" value="Submit" />
       </form>
-      <h1 style={{color:'red'}}>{user.error}</h1>
-      {
-        user.success && <h1 style={{color:'green'}}>Account Created Successfully</h1>
-      }
+      <h1 style={{ color: "red" }}>{user.error}</h1>
+      {user.success && (
+        <h1 style={{ color: "green" }}>
+          Account {newUser ? "Created" : "Logged In "} Successfully
+        </h1>
+      )}
     </div>
   );
 }
